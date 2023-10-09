@@ -1,0 +1,56 @@
+version: '3.9'
+
+services:
+  database:
+    image: postgres:15-alpine
+    container_name: postgres
+    networks:
+      - cloud-network
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: diploma
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    restart: always
+  app:
+    container_name: cloudstorage-backend-app
+    build: ./
+    ports:
+      - "8091:8091"
+    depends_on:
+      - database
+    networks:
+          - cloud-network
+    environment:
+#      PORT: 8091
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5434/diploma
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_LIQUIBASE_URL: jdbc:postgresql://database:5434/postgres
+      SPRING_LIQUIBASE_USER: postgres
+      SPRING_LIQUIBASE_PASSWORD: postgres
+
+  client:
+    container_name: frontend-client
+    build:
+      context: netology-diplom-frontend
+      dockerfile: Dockerfile
+    image: cloud-storage-front:latest
+    networks:
+      - cloud-network
+    #    environment:
+    #      - HOST_NAME=192.168.99.100
+    #      - HOST_PORT=8085
+    ports:
+      - "8080:8080"
+
+
+networks:
+  cloud-network:
+    name: cloud-network
+
+volumes:
+  dbvol:
+
