@@ -1,22 +1,22 @@
-package ru.netology.cloudstorage.service;
+package olegivanov.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import olegivanov.entities.User;
+import olegivanov.repositories.RoleRepository;
+import olegivanov.repositories.UserRepository;
+
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import ru.netology.cloudstorage.entity.User;
-import ru.netology.cloudstorage.repository.RoleRepository;
-import ru.netology.cloudstorage.repository.UserRepository;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.transaction.Transactional;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static java.lang.String.format;
 
 @RequiredArgsConstructor
 @Service
@@ -24,12 +24,7 @@ import static java.lang.String.format;
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
-
-
-//    @Autowired
-//    public UserService(UserRepository repository) {
-//        this.userRepository = repository;
-//    }
+    private final RoleRepository roleRepository;
 
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
@@ -46,9 +41,12 @@ public class UserService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
-                user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getName().name())).collect(Collectors.toList())
+                user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList())
         );
 
     }
-
+public void createNewUser(User user) {
+        user.setRoles(List.of(roleRepository.findByName("ROLE_USER").get()));
+        userRepository.save(user);
+}
 }

@@ -1,6 +1,7 @@
 package olegivanov.controllers;
 
 import lombok.RequiredArgsConstructor;
+import olegivanov.dtos.JwtRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,18 +13,10 @@ import java.security.Principal;
 @RestController
 @RequiredArgsConstructor
 public class MainController {
-    @GetMapping("/info")
-    public String info(Principal principal) {
-        return principal.getName();
-    }
-    @PostMapping("/create")
-    public ResponseEntity<?> createToken(@RequestBody JwtRequest jwtRequest) {
-        return authenticationService.createAuthToken(jwtRequest);
-    }
+//    @GetMapping("/info")
+//    public String info(Principal principal) {
+//        return principal.getName();
+//    }
 
-//    @PostMapping("/login")
-//    public AuthResponse login(@RequestBody AuthRequest request) {
-//        log.info("Authentication is successfully");
-//        return authenticationService.login(request);
-    //}
+
 }
