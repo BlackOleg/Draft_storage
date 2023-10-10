@@ -13,6 +13,11 @@ import java.security.Principal;
 @RestController
 @RequiredArgsConstructor
 public class MainController {
+
+    @GetMapping("/hello")
+    public String hello(){
+        return "Hello";
+    }
 //    @GetMapping("/info")
 //    public String info(Principal principal) {
 //        return principal.getName();
