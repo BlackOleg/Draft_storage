@@ -18,13 +18,9 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-#  liquibase:
-#    enabled: true
-#    default_schema: cloudstorage_diploma
-#    change-log: classpath:db/changelog/db.changelog-master.yaml
 
-#  main:
-#    allow-circular-references: true
+  main:
+    allow-circular-references: true
 
 app:
   jwt:

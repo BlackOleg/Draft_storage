@@ -30,19 +30,16 @@ import java.util.stream.Collectors;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final UserService userService;
+
     private final JwtTokenUtil jwtTokenUtil;
 
-    //    public JwtAuthenticationFilter(UserService userService, JwtTokenUtil jwtTokenUtil) {
-//        this.userService = userService;
-//        this.jwtTokenUtil = jwtTokenUtil;
-//    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         log.info("Security Filter Invoked...");
-        final String authHeader = request.getHeader("auth-token");
+        final String authHeader = request.getHeader("Authorization");
         String username = null;
         String jwtToken = null;
         if (authHeader != null && authHeader.startsWith("Bearer ")) {

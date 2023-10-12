@@ -4,6 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import olegivanov.dtos.JwtRequest;
 import olegivanov.dtos.JwtResponse;
+import olegivanov.dtos.RegistrationUserDto;
+import olegivanov.dtos.UserDto;
+import olegivanov.entities.User;
+import olegivanov.repositories.AuthenticationRepository;
 import olegivanov.utils.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,7 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
+
 
 import ru.netology.cloudstorage.exception.AppError;
 
@@ -27,9 +31,8 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
     private final JwtTokenUtil jwtTokenUtil;
-//    private final AuthenticationRepository authenticationRepository;
-//    private final UserRepository userRepository;
-//    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationRepository authenticationRepository;
+
 
 
     //здесь мы регистрируем нового пользователя и сохраняем его в базу, если такая функция будет необходима
@@ -44,27 +47,37 @@ public class AuthenticationService {
         return ResponseEntity.ok(new JwtResponse(token));
     }
 
+    public ResponseEntity<?> createNewUser(RegistrationUserDto registrationUserDto) {
+        if (!registrationUserDto.getPassword().equals(registrationUserDto.getConfirmPassword())) {
+            return new ResponseEntity<>(new AppError(HttpStatus.BAD_REQUEST.value(), "Passwords are different!"), HttpStatus.BAD_REQUEST);
+        }
+        if (userService.findByUsername(registrationUserDto.getUsername()) != null) {
+            return new ResponseEntity<>(new AppError(HttpStatus.BAD_REQUEST.value(), "User is already exist!"), HttpStatus.BAD_REQUEST);
+        }
+        User user = userService.createNewUser(registrationUserDto);
+        return ResponseEntity.ok(new UserDto(user.getId(), user.getUsername()));
+    }
 
-//    public AuthResponse login(AuthRequest request) {
-//        final String username = request.getLogin();
-//        final String password = request.getPassword();
-//        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-//        final UserDetails userDetails = userService.loadUserByUsername(username);
-//        String token = jwtTokenUtil.generateToken(userDetails);
-//        authenticationRepository.putTokenAndUsername(token, username);
-//        log.info("User {} is authorized", username);
-//        return AuthResponse.builder()
-//                .authToken(token)
-//                .build();
-//    }
-//
-//
-//    public void logout(String authToken) {
-//        if (authToken.startsWith("Bearer ")) {
-//            authToken = authToken.substring(7);
-//        }
-//        final String username = authenticationRepository.getUserNameByToken(authToken);
-//        log.info("User {} logout", username);
-//        authenticationRepository.removeTokenAndUsernameByToken(authToken);
-//    }
+    public JwtResponse login(JwtRequest request) {
+        final String username = request.getUsername();
+        final String password = request.getPassword();
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        final UserDetails userDetails = userService.loadUserByUsername(username);
+        String token = jwtTokenUtil.generateToken(userDetails);
+        authenticationRepository.putTokenAndUsername(token, username);
+        log.info("User {} is authorized", username);
+        return JwtResponse.builder()
+                .token(token)
+                .build();
+    }
+
+
+    public void logout(String authToken) {
+        if (authToken.startsWith("Bearer ")) {
+            authToken = authToken.substring(7);
+        }
+        final String username = authenticationRepository.getUserNameByToken(authToken);
+        log.info("User {} logout", username);
+        authenticationRepository.removeTokenAndUsernameByToken(authToken);
+    }
 }

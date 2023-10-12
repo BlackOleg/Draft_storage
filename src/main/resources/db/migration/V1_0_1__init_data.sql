@@ -1,6 +1,6 @@
 insert into cloudstorage_diploma.users (username, password)
-values ('oleg@gmail.com', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im9sZWdAZ21haWwuY29tIiwicGFzc3dvcmQiOiJvbGVnIn0.4SwQOwj4GUDQzjm2KLgOxJeSjXO5HlSJjx6VvOcLC8Q'),
-       ('user@gmail.com', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXJAZ21haWwuY29tIiwicGFzc3dvcmQiOiJ1c2VyIn0.9mjZclXTk6AgpvYE3WLL2DnOFQHjNJQzc7CRwC7B7WU');
+values ('oleg@gmail.com', '$2y$10$fmoXxjJKWz2hgCPXI9pkWeUV51KpbZhoagRBHBEQ53BR9FLdXLICO'),
+       ('user@gmail.com', '$2y$10$OJyDv4/iMTSmLIIUPyEjVeriOphokSh.T4VbKAULS6bZv3MbfD4wS');
 
 insert into cloudstorage_diploma.roles (name)
 values ('ROLE_USER'),

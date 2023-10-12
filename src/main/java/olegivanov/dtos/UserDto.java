@@ -1,12 +1,12 @@
 package olegivanov.dtos;
 
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 
 @Data
-@Builder
 @AllArgsConstructor
-public class JwtResponse {
-    private String token;
+public class UserDto {
+    private Long id;
+    private String username;
 }

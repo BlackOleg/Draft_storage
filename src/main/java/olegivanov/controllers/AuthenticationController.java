@@ -4,6 +4,8 @@ package olegivanov.controllers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import olegivanov.dtos.JwtRequest;
+import olegivanov.dtos.JwtResponse;
+import olegivanov.dtos.RegistrationUserDto;
 import olegivanov.service.AuthenticationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +14,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import ru.netology.cloudstorage.exception.AppError;
 
 import java.security.Principal;
 
@@ -33,23 +36,27 @@ public class AuthenticationController {
     public ResponseEntity<?> createToken(@RequestBody JwtRequest jwtRequest) {
         return authenticationService.createAuthToken(jwtRequest);
     }
-    @PostMapping("/registerium")
-    public ResponseEntity<?> register(@RequestBody JwtRequest jwtRequest) {
-        return authenticationService.createAuthToken(jwtRequest);
+//    @PostMapping("/registerium")
+//    public ResponseEntity<?> register(@RequestBody JwtRequest jwtRequest) {
+//        return authenticationService.createAuthToken(jwtRequest);
+//    }
+    @PostMapping("/register")
+    public ResponseEntity<?> createNewUser(@RequestBody RegistrationUserDto registrationUserDto) {
+        return authenticationService.createNewUser(registrationUserDto);
     }
 
 
-//    @PostMapping("/login")
-//    public AuthResponse login(@RequestBody AuthRequest request) {
-//        log.info("Authentication is successfully");
-//        return authenticationService.login(request);
-//
-//    }
-//
-//    @PostMapping("/logout")
-//    public ResponseEntity<?> logout(@RequestHeader("auth-token") String authToken) {
-//        authenticationService.logout(authToken);
-//        return ResponseEntity.ok(HttpStatus.OK);
-//    }
+    @PostMapping("/login")
+    public JwtResponse login(@RequestBody JwtRequest request) {
+        log.info("Authentication is successfully");
+        return authenticationService.login(request);
+
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader("auth-token") String authToken) {
+        authenticationService.logout(authToken);
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
 
 }
