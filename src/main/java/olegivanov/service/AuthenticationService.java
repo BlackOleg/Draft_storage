@@ -1,83 +1,121 @@
 package olegivanov.service;
 
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import olegivanov.dtos.JwtRequest;
-import olegivanov.dtos.JwtResponse;
-import olegivanov.dtos.RegistrationUserDto;
-import olegivanov.dtos.UserDto;
+import olegivanov.dtos.AuthenticationRequest;
+import olegivanov.dtos.AuthenticationResponse;
+import olegivanov.dtos.RegisterRequest;
 import olegivanov.entities.User;
-import olegivanov.repositories.AuthenticationRepository;
-import olegivanov.utils.JwtTokenUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import olegivanov.repositories.UserRepository;
+import olegivanov.token.Token;
+import olegivanov.token.TokenRepository;
+import olegivanov.token.TokenType;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 
-import ru.netology.cloudstorage.exception.AppError;
-
-
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
+  private final UserRepository repository;
+  private final TokenRepository tokenRepository;
+  private final PasswordEncoder passwordEncoder;
+  private final JwtService jwtService;
+  private final AuthenticationManager authenticationManager;
 
-    private final AuthenticationManager authenticationManager;
-    private final UserService userService;
-    private final JwtTokenUtil jwtTokenUtil;
-    private final AuthenticationRepository authenticationRepository;
+  public AuthenticationResponse register(RegisterRequest request) {
+    var user = User.builder()
+        .firstname(request.getFirstname())
+        .lastname(request.getLastname())
+        .email(request.getEmail())
+        .password(passwordEncoder.encode(request.getPassword()))
+        .role(request.getRole())
+        .build();
+    var savedUser = repository.save(user);
+    var jwtToken = jwtService.generateToken(user);
+    var refreshToken = jwtService.generateRefreshToken(user);
+    saveUserToken(savedUser, jwtToken);
+    return AuthenticationResponse.builder()
+        .accessToken(jwtToken)
+            .refreshToken(refreshToken)
+        .build();
+  }
 
+  public AuthenticationResponse authenticate(AuthenticationRequest request) {
+    authenticationManager.authenticate(
+        new UsernamePasswordAuthenticationToken(
+            request.getEmail(),
+            request.getPassword()
+        )
+    );
+    var user = repository.findByEmail(request.getEmail())
+        .orElseThrow();
+    var jwtToken = jwtService.generateToken(user);
+    var refreshToken = jwtService.generateRefreshToken(user);
+    revokeAllUserTokens(user);
+    saveUserToken(user, jwtToken);
+    return AuthenticationResponse.builder()
+        .accessToken(jwtToken)
+            .refreshToken(refreshToken)
+        .build();
+  }
 
+  private void saveUserToken(User user, String jwtToken) {
+    var token = Token.builder()
+        .user(user)
+        .token(jwtToken)
+        .tokenType(TokenType.BEARER)
+        .expired(false)
+        .revoked(false)
+        .build();
+    tokenRepository.save(token);
+  }
 
-    //здесь мы регистрируем нового пользователя и сохраняем его в базу, если такая функция будет необходима
-    public ResponseEntity<?> createAuthToken(JwtRequest jwtRequest) {
-        try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(jwtRequest.getUsername(), jwtRequest.getPassword()));
-        } catch (BadCredentialsException e) {
-            return new ResponseEntity<>(new AppError(HttpStatus.UNAUTHORIZED.value(), "Incorrect login or password"), HttpStatus.UNAUTHORIZED);
-        }
-        UserDetails userDetails = userService.loadUserByUsername(jwtRequest.getUsername());
-        String token = jwtTokenUtil.generateToken(userDetails);
-        return ResponseEntity.ok(new JwtResponse(token));
+  private void revokeAllUserTokens(User user) {
+    var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
+    if (validUserTokens.isEmpty())
+      return;
+    validUserTokens.forEach(token -> {
+      token.setExpired(true);
+      token.setRevoked(true);
+    });
+    tokenRepository.saveAll(validUserTokens);
+  }
+
+  public void refreshToken(
+          HttpServletRequest request,
+          HttpServletResponse response
+  ) throws IOException {
+    final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+    final String refreshToken;
+    final String userEmail;
+    if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
+      return;
     }
-
-    public ResponseEntity<?> createNewUser(RegistrationUserDto registrationUserDto) {
-        if (!registrationUserDto.getPassword().equals(registrationUserDto.getConfirmPassword())) {
-            return new ResponseEntity<>(new AppError(HttpStatus.BAD_REQUEST.value(), "Passwords are different!"), HttpStatus.BAD_REQUEST);
-        }
-        if (userService.findByUsername(registrationUserDto.getUsername()) != null) {
-            return new ResponseEntity<>(new AppError(HttpStatus.BAD_REQUEST.value(), "User is already exist!"), HttpStatus.BAD_REQUEST);
-        }
-        User user = userService.createNewUser(registrationUserDto);
-        return ResponseEntity.ok(new UserDto(user.getId(), user.getUsername()));
-    }
-
-    public JwtResponse login(JwtRequest request) {
-        final String username = request.getUsername();
-        final String password = request.getPassword();
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-        final UserDetails userDetails = userService.loadUserByUsername(username);
-        String token = jwtTokenUtil.generateToken(userDetails);
-        authenticationRepository.putTokenAndUsername(token, username);
-        log.info("User {} is authorized", username);
-        return JwtResponse.builder()
-                .token(token)
+    refreshToken = authHeader.substring(7);
+    userEmail = jwtService.extractUsername(refreshToken);
+    if (userEmail != null) {
+      var user = this.repository.findByEmail(userEmail)
+              .orElseThrow();
+      if (jwtService.isTokenValid(refreshToken, user)) {
+        var accessToken = jwtService.generateToken(user);
+        revokeAllUserTokens(user);
+        saveUserToken(user, accessToken);
+        var authResponse = AuthenticationResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .build();
+        new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
+      }
     }
-
-
-    public void logout(String authToken) {
-        if (authToken.startsWith("Bearer ")) {
-            authToken = authToken.substring(7);
-        }
-        final String username = authenticationRepository.getUserNameByToken(authToken);
-        log.info("User {} logout", username);
-        authenticationRepository.removeTokenAndUsernameByToken(authToken);
-    }
+  }
 }

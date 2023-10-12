@@ -1,56 +1,38 @@
-version: '3.9'
-
 services:
-  database:
-    image: postgres:15-alpine
-    container_name: postgres
-    networks:
-      - cloud-network
-    ports:
-      - "5434:5432"
+  postgres:
+    container_name: postgres-sql
+    image: postgres
     environment:
-      POSTGRES_DB: diploma
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    restart: always
-  app:
-    container_name: cloudstorage-backend-app
-    build: ./
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
     ports:
-      - "8091:8091"
-    depends_on:
-      - database
+      - "5432:5432"
     networks:
-          - cloud-network
+      - postgres
+    restart: unless-stopped
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
     environment:
-#      PORT: 8091
-      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5434/diploma
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_LIQUIBASE_URL: jdbc:postgresql://database:5434/postgres
-      SPRING_LIQUIBASE_USER: postgres
-      SPRING_LIQUIBASE_PASSWORD: postgres
-
-  client:
-    container_name: frontend-client
-    build:
-      context: netology-diplom-frontend
-      dockerfile: Dockerfile
-    image: cloud-storage-front:latest
-    networks:
-      - cloud-network
-    #    environment:
-    #      - HOST_NAME=192.168.99.100
-    #      - HOST_PORT=8085
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
     ports:
-      - "8080:8080"
-
+      - "5050:80"
+    networks:
+      - postgres
+    restart: unless-stopped
 
 networks:
-  cloud-network:
-    name: cloud-network
+  postgres:
+    driver: bridge
 
 volumes:
-  dbvol:
-
+  postgres:
+  pgadmin:

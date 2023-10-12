@@ -1,62 +1,47 @@
 package olegivanov.controllers;
 
-
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import olegivanov.dtos.JwtRequest;
-import olegivanov.dtos.JwtResponse;
-import olegivanov.dtos.RegistrationUserDto;
+import olegivanov.dtos.AuthenticationRequest;
+import olegivanov.dtos.AuthenticationResponse;
+import olegivanov.dtos.RegisterRequest;
 import olegivanov.service.AuthenticationService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
-import ru.netology.cloudstorage.exception.AppError;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
+import java.io.IOException;
 
-@Slf4j
 @RestController
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
 
-   private final AuthenticationService authenticationService;
+  private final AuthenticationService service;
 
+  @PostMapping("/register")
+  public ResponseEntity<AuthenticationResponse> register(
+      @RequestBody RegisterRequest request
+  ) {
+    return ResponseEntity.ok(service.register(request));
+  }
+  @PostMapping("/authenticate")
+  public ResponseEntity<AuthenticationResponse> authenticate(
+      @RequestBody AuthenticationRequest request
+  ) {
+    return ResponseEntity.ok(service.authenticate(request));
+  }
 
+  @PostMapping("/refresh-token")
+  public void refreshToken(
+      HttpServletRequest request,
+      HttpServletResponse response
+  ) throws IOException {
+    service.refreshToken(request, response);
+  }
 
-    @GetMapping("/info")
-    public String info(Principal principal) {
-        return principal.getName();
-    }
-
-    @PostMapping("/auth")
-    public ResponseEntity<?> createToken(@RequestBody JwtRequest jwtRequest) {
-        return authenticationService.createAuthToken(jwtRequest);
-    }
-//    @PostMapping("/registerium")
-//    public ResponseEntity<?> register(@RequestBody JwtRequest jwtRequest) {
-//        return authenticationService.createAuthToken(jwtRequest);
-//    }
-    @PostMapping("/register")
-    public ResponseEntity<?> createNewUser(@RequestBody RegistrationUserDto registrationUserDto) {
-        return authenticationService.createNewUser(registrationUserDto);
-    }
-
-
-    @PostMapping("/login")
-    public JwtResponse login(@RequestBody JwtRequest request) {
-        log.info("Authentication is successfully");
-        return authenticationService.login(request);
-
-    }
-
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("auth-token") String authToken) {
-        authenticationService.logout(authToken);
-        return ResponseEntity.ok(HttpStatus.OK);
-    }
 
 }
