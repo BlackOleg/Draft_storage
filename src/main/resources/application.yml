@@ -1,3 +1,5 @@
+server:
+  port: 8091
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5434/cloudstorage_diploma
@@ -24,7 +26,7 @@ application:
 
 configuration:
     cors:
-      origins: 'http://localhost:8080'
+      origins: 'http://localhost:8091'
       methods: '*'
       headers: '*'
       allow-credentials: true
