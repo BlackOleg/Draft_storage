@@ -31,16 +31,16 @@ public class MyCloudStorageApplication {
 					.password("oleg")
 					.role(ADMIN)
 					.build();
-			System.out.println("Admin token: " + service.register(admin).getAccessToken());
+			System.out.println( "Token for " + admin.getEmail() + " : " + service.register(admin).getAccessToken());
 
 			var manager = RegisterRequest.builder()
-					.firstname("Admin")
-					.lastname("Admin")
+					.firstname("User")
+					.lastname("User")
 					.email("manager@mail.com")
 					.password("password")
 					.role(MANAGER)
 					.build();
-			System.out.println("Manager token: " + service.register(manager).getAccessToken());
+			System.out.println("User token: " + service.register(manager).getAccessToken());
 
 		};
 	}

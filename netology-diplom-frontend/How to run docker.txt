@@ -1,0 +1,2 @@
+docker build . -t diplom-frontend  
+docker run -p 8080:8080 -d diplom-frontend
