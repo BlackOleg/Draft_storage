@@ -17,7 +17,7 @@ import java.util.Map;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/file")
-@CrossOrigin(origins = "http://localhost:8080")
+//@CrossOrigin(origins = "http://localhost:8080")
 public class FileController {
 
     private FileService service;

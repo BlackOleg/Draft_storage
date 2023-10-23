@@ -1,6 +1,7 @@
 package olegivanov.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -12,6 +13,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 import static olegivanov.entities.Permission.ADMIN_CREATE;
 import static olegivanov.entities.Permission.ADMIN_DELETE;
@@ -34,9 +40,11 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @RequiredArgsConstructor
 @EnableMethodSecurity
 public class SecurityConfiguration {
-
-    private static final String[] WHITE_LIST_URL = {"/login"
-            };
+    @Value("${configuration.cors.origins}")
+    private String corsOrigins;
+    private static final String[] WHITE_LIST_URL = {"/login",
+            "/register*"
+    };
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
     private final LogoutHandler logoutHandler;
@@ -44,17 +52,26 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+
+//                .cors().and().csrf().disable()
+//                .headers().frameOptions().disable()
+//                  .and()
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req ->
-                        req.requestMatchers(WHITE_LIST_URL)
-                                .permitAll()
-//                                .requestMatchers("/file").hasAnyRole(ADMIN.name(), MANAGER.name())
-//                                .requestMatchers(GET, "/file").hasAnyAuthority(ADMIN_READ.name(), MANAGER_READ.name())
-//                                .requestMatchers(POST, "/file").hasAnyAuthority(ADMIN_CREATE.name(), MANAGER_CREATE.name())
-//                                .requestMatchers(PUT, "/file").hasAnyAuthority(ADMIN_UPDATE.name(), MANAGER_UPDATE.name())
-//                                .requestMatchers(DELETE, "/file").hasAnyAuthority(ADMIN_DELETE.name(), MANAGER_DELETE.name())
-                                .anyRequest()
-                                .authenticated()
+                                req.requestMatchers(WHITE_LIST_URL)
+                                        .permitAll()
+                                .requestMatchers("/file").hasAnyRole(ADMIN.name(), MANAGER.name())
+                                .requestMatchers(GET, "/file").hasAnyAuthority(ADMIN_READ.name(), MANAGER_READ.name())
+                                .requestMatchers(POST, "/file").hasAnyAuthority(ADMIN_CREATE.name(), MANAGER_CREATE.name())
+                                .requestMatchers(PUT, "/file").hasAnyAuthority(ADMIN_UPDATE.name(), MANAGER_UPDATE.name())
+                                .requestMatchers(DELETE, "/file").hasAnyAuthority(ADMIN_DELETE.name(), MANAGER_DELETE.name())
+                                        .requestMatchers("/list").hasAnyRole(ADMIN.name(), MANAGER.name())
+                                        .requestMatchers(GET, "/list").hasAnyAuthority(ADMIN_READ.name(), MANAGER_READ.name())
+                                        .requestMatchers(POST, "/list").hasAnyAuthority(ADMIN_CREATE.name(), MANAGER_CREATE.name())
+                                        .requestMatchers(PUT, "/list").hasAnyAuthority(ADMIN_UPDATE.name(), MANAGER_UPDATE.name())
+                                        .requestMatchers(DELETE, "/list").hasAnyAuthority(ADMIN_DELETE.name(), MANAGER_DELETE.name())
+                                        .anyRequest()
+                                        .authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider)
@@ -68,4 +85,6 @@ public class SecurityConfiguration {
 
         return http.build();
     }
+
+
 }

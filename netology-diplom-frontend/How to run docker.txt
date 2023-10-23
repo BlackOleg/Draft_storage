@@ -1,2 +1,7 @@
-docker build . -t diplom-frontend  
-docker run -p 8080:8080 -d diplom-frontend
+
+
+- Собрать docker образ выполнив команду<br> 
+docker build  -t mt-frontend .
+Полученный образ можно запустить  командой<br> 
+
+ docker run -itd --name mt-frontend -p 8080:8080 mt-frontend

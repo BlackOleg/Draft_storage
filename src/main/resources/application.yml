@@ -26,7 +26,7 @@ application:
 
 configuration:
     cors:
-      origins: 'http://localhost:8091'
+      origins: 'http://localhost:8080'
       methods: '*'
       headers: '*'
       allow-credentials: true
