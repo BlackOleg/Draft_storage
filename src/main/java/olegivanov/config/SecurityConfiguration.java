@@ -40,10 +40,10 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @RequiredArgsConstructor
 @EnableMethodSecurity
 public class SecurityConfiguration {
-    @Value("${configuration.cors.origins}")
-    private String corsOrigins;
+
     private static final String[] WHITE_LIST_URL = {"/login",
-            "/register*"
+            "/register*",
+            "/logout"
     };
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
@@ -52,26 +52,27 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-
 //                .cors().and().csrf().disable()
 //                .headers().frameOptions().disable()
 //                  .and()
+                .cors(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
+                .headers(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req ->
-                                req.requestMatchers(WHITE_LIST_URL)
-                                        .permitAll()
+                        req.requestMatchers(WHITE_LIST_URL)
+                                .permitAll()
                                 .requestMatchers("/file").hasAnyRole(ADMIN.name(), MANAGER.name())
                                 .requestMatchers(GET, "/file").hasAnyAuthority(ADMIN_READ.name(), MANAGER_READ.name())
                                 .requestMatchers(POST, "/file").hasAnyAuthority(ADMIN_CREATE.name(), MANAGER_CREATE.name())
                                 .requestMatchers(PUT, "/file").hasAnyAuthority(ADMIN_UPDATE.name(), MANAGER_UPDATE.name())
                                 .requestMatchers(DELETE, "/file").hasAnyAuthority(ADMIN_DELETE.name(), MANAGER_DELETE.name())
-                                        .requestMatchers("/list").hasAnyRole(ADMIN.name(), MANAGER.name())
-                                        .requestMatchers(GET, "/list").hasAnyAuthority(ADMIN_READ.name(), MANAGER_READ.name())
-                                        .requestMatchers(POST, "/list").hasAnyAuthority(ADMIN_CREATE.name(), MANAGER_CREATE.name())
-                                        .requestMatchers(PUT, "/list").hasAnyAuthority(ADMIN_UPDATE.name(), MANAGER_UPDATE.name())
-                                        .requestMatchers(DELETE, "/list").hasAnyAuthority(ADMIN_DELETE.name(), MANAGER_DELETE.name())
-                                        .anyRequest()
-                                        .authenticated()
+                                .requestMatchers("/list").hasAnyRole(ADMIN.name(), MANAGER.name())
+                                .requestMatchers(GET, "/list").hasAnyAuthority(ADMIN_READ.name(), MANAGER_READ.name())
+                                .requestMatchers(POST, "/list").hasAnyAuthority(ADMIN_CREATE.name(), MANAGER_CREATE.name())
+                                .requestMatchers(PUT, "/list").hasAnyAuthority(ADMIN_UPDATE.name(), MANAGER_UPDATE.name())
+                                .requestMatchers(DELETE, "/list").hasAnyAuthority(ADMIN_DELETE.name(), MANAGER_DELETE.name())
+                                .anyRequest()
+                                .authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider)

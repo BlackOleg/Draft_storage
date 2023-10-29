@@ -36,7 +36,7 @@ public class MyCloudStorageApplication {
 			var manager = RegisterRequest.builder()
 					.firstname("User")
 					.lastname("User")
-					.email("manager@mail.com")
+					.email("user@mail.ru")
 					.password("password")
 					.role(MANAGER)
 					.build();
